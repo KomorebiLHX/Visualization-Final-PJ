@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- 引入d3.js v6版本-->
+    <script src="http://d3js.org/d3.v6.min.js"></script>
+    <style>
+        #map{
+            width:1010px;
+            height:910px;
+            left:0.5%;
+            top:1%;
+            border: thick solid rgba(0, 0, 0, 0.89);
+            border-width: 3px;
+            position: absolute;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+        #relation{
+            width:870px;
+            height:450px;
+            left: 1030px;
+            top:1%;
+            border: thick solid rgba(0, 0, 0, 0.89);
+            border-width: 3px;
+            position: absolute;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+        #card{
+            width:870px;
+            height:450px;
+            left:1030px;
+            top:50%;
+            border: thick solid rgba(0, 0, 0, 0.89);
+            border-width: 3px;
+            position: absolute;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+        .links line {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        .nodes circle {
+        stroke: #fff;
+        stroke-width: 1.5px;
+        }
+        .node text {
+        pointer-events: none;
+        font: 15px sans-serif;
+        }
+        .car_form {
+            z-index:999
+        }
+        /* 提示框 */
+        .tooltip {
+        position: absolute;
+        padding: 7px;
+        font-size: 0.9em;
+        pointer-events: none;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        /* 添加阴影效果 */
+        -moz-box-shadow:    3px 3px 10px 0px rgba(0, 0, 0, 0.25);
+        -webkit-box-shadow: 3px 3px 10px 0px rgba(0, 0, 0, 0.25);
+        box-shadow:         3px 3px 10px 0px rgba(0, 0, 0, 0.25);
+        }
+        .tooltip p {
+        margin: 0;
+        padding: 0;
+        }
+        .tooltip table {
+        margin: 0;
+        padding: 0;
+        border-collapse: collapse;
+        }
+        path.hull {
+        fill: lightsteelblue;
+        fill-opacity: 0.3;
+        }
+        .button {
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        padding: 16px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        -webkit-transition-duration: 0.4s; /* Safari */
+        transition-duration: 0.4s;
+        cursor: pointer;
+        }
+        .play_button {
+            position: absolute;
+            background-color: white; 
+            color: black; 
+            border: 2px solid #4CAF50;
+            z-index: 99;
+            top: 820px;
+            left: 50px;
+        }
+        .play_button:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .reset_button {
+            position: absolute;
+            background-color: white; 
+            color: black; 
+            border: 2px solid #008CBA;
+            z-index: 99;
+            top: 820px;
+            left: 155px;
+        }
+        .reset_button:hover {
+            background-color: #008CBA;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 车辆选择框 -->
+    <form name="myform1" class='car_form' style="position:absolute; top:32px; left:850px; line-height:12.5px;">
+        <input type="checkbox" class="checkclass" name="single" id="1" checked="true" style="margin-bottom:0px"/>01<input type="checkbox" class="checkclass" name="single" id="15" checked="true" style="margin-bottom:0px"/>15<input type="checkbox" class="checkclass" name="single" id="29" checked="true" style="margin-bottom:0px"/>29
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="2" checked="true" style="margin-bottom:0px"/>02<input type="checkbox" class="checkclass" name="single" id="16" checked="true" style="margin-bottom:0px"/>16<input type="checkbox" class="checkclass" name="single" id="30" checked="true" style="margin-bottom:0px"/>30
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="3" checked="true" style="margin-bottom:0px"/>03<input type="checkbox" class="checkclass" name="single" id="17" checked="true" style="margin-bottom:0px"/>17<input type="checkbox" class="checkclass" name="single" id="31" checked="true" style="margin-bottom:0px"/>31
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="4" checked="true" style="margin-bottom:0px"/>04<input type="checkbox" class="checkclass" name="single" id="18" checked="true" style="margin-bottom:0px"/>18<input type="checkbox" class="checkclass" name="single" id="32" checked="true" style="margin-bottom:0px"/>32
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="5" checked="true" style="margin-bottom:0px"/>05<input type="checkbox" class="checkclass" name="single" id="19" checked="true" style="margin-bottom:0px"/>19<input type="checkbox" class="checkclass" name="single" id="33" checked="true" style="margin-bottom:0px"/>33
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="6" checked="true" style="margin-bottom:0px"/>06<input type="checkbox" class="checkclass" name="single" id="20" checked="true" style="margin-bottom:0px"/>20<input type="checkbox" class="checkclass" name="single" id="34" checked="true" style="margin-bottom:0px"/>34
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="7" checked="true" style="margin-bottom:0px"/>07<input type="checkbox" class="checkclass" name="single" id="21" checked="true" style="margin-bottom:0px"/>21<input type="checkbox" class="checkclass" name="single" id="35" checked="true" style="margin-bottom:0px"/>35
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="8" checked="true" style="margin-bottom:0px"/>08<input type="checkbox" class="checkclass" name="single" id="22" checked="true" style="margin-bottom:0px"/>22<input type="checkbox" class="checkclass" name="single" id="36" checked="true" style="margin-bottom:0px"/>101
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="9" checked="true" style="margin-bottom:0px"/>09<input type="checkbox" class="checkclass" name="single" id="23" checked="true" style="margin-bottom:0px"/>23<input type="checkbox" class="checkclass" name="single" id="37" checked="true" style="margin-bottom:0px"/>104
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="10" checked="true" style="margin-bottom:0px"/>10<input type="checkbox" class="checkclass" name="single" id="24" checked="true" style="margin-bottom:0px"/>24<input type="checkbox" class="checkclass" name="single" id="38" checked="true" style="margin-bottom:0px"/>105
+        </br></br>  
+        <input type="checkbox" class="checkclass" name="single" id="11" checked="true" style="margin-bottom:0px"/>11<input type="checkbox" class="checkclass" name="single" id="25" checked="true" style="margin-bottom:0px"/>25<input type="checkbox" class="checkclass" name="single" id="39" checked="true" style="margin-bottom:0px"/>106
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="12" checked="true" style="margin-bottom:0px"/>12<input type="checkbox" class="checkclass" name="single" id="26" checked="true" style="margin-bottom:0px"/>26<input type="checkbox" class="checkclass" name="single" id="40" checked="true"style="margin-bottom:0px"/>107
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="13" checked="true" style="margin-bottom:0px"/>13<input type="checkbox" class="checkclass" name="single" id="27" checked="true" style="margin-bottom:0px"/>27 
+        </br></br>
+        <input type="checkbox" class="checkclass" name="single" id="14" checked="true" style="margin-bottom:0px"/>14<input type="checkbox" class="checkclass" name="single" id="28" checked="true" style="margin-bottom:0px"/>28
+        </br></br>      
+    </form>
+    <!-- 按钮 -->
+    <button class="button play_button">暂停</button>
+    <button class="button reset_button">重置</button>
+    <!-- 地图 -->
+    <div id='map'></div>
+    <div id='relation'></div>
+    <div id='card'></div>
+
+
+    <script>
+        // 初始化程序虚拟的全局时间
+        var global_date = {'y':2014, 'm':1, 'd':6, 'hh':6, 'mm':29, 'ss':0}
+        var end_date = {'y':2014, 'm':1, 'd':19, 'hh':20, 'mm':56, 'ss':0}
+        // 初始化SVG元素
+        // 设置画布大小-四周留间距
+        let margin = {top: 20, right: 20, bottom: 20, left: 20};
+	    let width = 1000 - margin.left - margin.right,
+		height = 900 - margin.top - margin.bottom,
+		formatPercent = d3.format(".1%");
+        // 创建SVG元素并添加到map中
+        let svg_map = d3.select("#map").append("svg") 
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        // 设置关系画布大小-四周留间距
+	    let relation_width = 870 - margin.left - margin.right,
+		relation_height = 450 - margin.top - margin.bottom;
+        // 创建SVG元素并添加到relation中
+        let svg_relation = d3.select("#relation")
+        .append("svg")
+        .attr("width", relation_width + margin.left + margin.right)
+        .attr("height", relation_height + margin.top + margin.bottom);
+        // 创建SVG元素并添加到card中
+        let svg_card = d3.select("#card")
+        .append("svg")
+        .attr("width", relation_width + margin.left + margin.right)
+        .attr("height", relation_height + margin.top + margin.bottom);
+        // 颜色尺度
+        let color = d3.scaleOrdinal(d3.schemeSet2);
+
+
+
+
+        // 创建一个时钟
+        var innerRadius = 95 //圆的内半径、外半径
+        var outerRadius = 100
+        var clock_width = 650
+        var clock_height = 150
+        var arc = d3.arc() //弧生成器
+        .innerRadius(innerRadius) //设置内半径、0则为实心圆
+        .outerRadius(outerRadius); //设置外半径
+        
+        // 下面的数组的作用是这样的：
+        // 首先我的圆的颜色渐变的，而我的渐变方法是将圆切割成很多份，每份是渐变过程中的一个颜色。
+        // 当切割的份数多的时候就是看起来像渐变的一样。 
+        // 下面的时针、分针、秒针也会在指着不同的角度的时候同时改变自身的颜色。
+        // 当然也看到了其他的圆渐变的方法，你可以自己搜索。
+        var sum = 1000; // sum代表圆被分成了多少份。 
+        var num = new Array(); 
+        for (var i = 0; i < sum; i++) {
+            num.push(1);
+        }
+        
+        var linear = d3.scaleLinear() // 通过线性比例尺来计算插值。
+        .domain([0, sum])
+        .range([0, 1])
+
+        var svg_clock = svg_map.append('g')
+
+        var pie = d3.pie()
+        // .sort(null)
+        // .value(function(d) {
+        //     return d.value;
+        // });
+
+        var arcs = svg_clock.selectAll("g")
+        .data(pie(num)) //绑定转换后的数据piedata
+        .enter()
+        .append("g")
+        .attr("transform", "translate(" + clock_width + "," + clock_height + ")");
+        
+        // var clock_color = d3.scale.category10()
+        var a = d3.rgb(121, 205, 205); //红色 设置渐变颜色的起始
+        var b = d3.rgb(121, 205, 205); //绿色
+        var c = d3.rgb(121, 205, 205);
+        var compute = d3.interpolate(a, b); //他的值是介于0-1的
+        
+        
+        arcs.append("path")
+        .attr('fill', function(d, i) {
+        return compute(linear(i)); //通过上面的linear比例函数看i当前是在多少。当然也可以直接(1/sum*i)
+        })
+        .attr('stroke-width', "0")
+        .attr("d", function(d) {
+        return arc(d); //使用弧生成器
+        });
+        
+        //下面是给将圆给分成了60等份
+        var num2 = new Array();
+        for (var i = 0; i < 60; i++) num2.push(i);
+        var ticks = svg_clock.append('g').selectAll('g')
+        .data(num2)
+        .enter()
+        .append('g')
+        .attr("transform", "translate(" + clock_width + "," + clock_height + ")");
+  
+        ticks.append("line")
+        .attr("x1", 1)
+        .attr("x1", 0)
+        .attr("x2", function(d,i){
+            return i%15==0? 10:6; //添加圆内的刻度线 根据是不是3、6、9、12来判断是否加长
+        })
+        .attr("y2", 0)
+        .attr('transform',function(d,i){
+            
+            return "rotate(" + (6*i -90) + ")" 
+            + "translate(" + (innerRadius-10) +")";
+        })
+        .style('stroke',function(d,i){
+            return compute(i/60);
+        })
+        .style('stroke-width',5); 
+        
+        ticks.append("text")
+        .attr('transform', function(d, i) {
+        var angle = (Math.PI * 2) / 60 * i - Math.PI;
+        return "translate(" + (Math.sin(angle) * (innerRadius - 20) ) + "," + (Math.cos(angle) * (innerRadius - 20) )+ ")";
+        })
+        .attr("x", 7)
+        .attr("dy", ".35em")
+        .style('font-size', function(d, i) {
+        if (i % 15 == 0)
+        return "1.2em"
+        })
+        .style("text-anchor", function(d) {
+        return i > 29 ? "end" : null;
+        })
+        .text(function(d, i) {
+        return !(i % 5) ? (60 - i) / 5 : null;
+        });
+        
+        var arc2 = d3.arc().innerRadius(0).outerRadius(10);
+        
+        svg_clock.selectAll('g')
+        .data(d3.pie()(num))
+        .enter()
+        .append('g')
+        arcs.append("path")
+        .attr('fill', function(d, i) {
+        return compute(linear(i))
+        })
+        .attr("d", function(d, i) {
+        return arc2(d);
+        });
+        
+        // var SecondsLine = svg_clock.append('g').append('line')
+        // .attr("x1", clock_width)
+        // .attr("y1", clock_height)
+        // .style('stroke-width', 1)
+        
+        
+        var MinutesLine = svg_clock.append('g').append('line')
+        .attr('x1', clock_width)
+        .attr('y1', clock_height)
+        .style('stroke-width', 3)
+        
+        var HoursLine = svg_clock.append('g').append('line')
+        .attr('x1', clock_width)
+        .attr('y1', clock_height)
+        .style('stroke-width', 5);
+        
+        var str=[1];
+        var updatetimetext=svg_clock.append('g')
+        .selectAll('.timetext').data(str)
+        .enter()
+        .append('text')
+        .attr('class', 'timetext')
+        .text(function(d, i) {
+        return d;
+        })
+        .attr('transform', function(d, i) {
+        return "translate(" + 650 + "," + 300 + ")"
+        })
+        .style('text-anchor', "middle")
+        .style('font-size', "2em");
+        function chuli(date) {
+            var d = new Date();
+            d.setFullYear(date['y'], date['m'], date['d'])
+            d.setHours(date['hh'], date['mm'], date['ss'])
+            var dm = d.getTime() % 1000;
+            var h = (d.getHours() >= 12 ? d.getHours() - 12 : d.getHours());
+            var m = d.getMinutes();
+            var s = d.getSeconds();
+            var angle = (Math.PI * 2) / 60 * (60 - s) + Math.PI;
+            var angle2 = (Math.PI * 2) / (60 * 60) * ((60 * 60 - m * 60-s)) + Math.PI;
+            var angle3 = (Math.PI * 2) / (12 * 60 * 60) * (12 * 60 * 60 - h * 60 * 60 - m * 60 - s) + Math.PI;
+            // SecondsLine.attr('x2', function(d, i) {
+            // return clock_width + (innerRadius - 30) * Math.sin(angle);
+            // })
+            // .attr('y2', function(d, i) {
+            // return clock_height + (innerRadius - 30) * Math.cos(angle);
+            // })
+            // .style('stroke', compute((s / 60)));       
+            MinutesLine.attr('x2', function(d, i) {
+            return clock_width  + (innerRadius - 40) * Math.sin(angle2);
+            })
+            .attr('y2', function(d, i) {
+            return clock_height + (innerRadius - 40) * Math.cos(angle2);
+            })
+            .style('stroke', compute((m / 60)));
+            
+            HoursLine.attr('x2', function(d, i) {
+            return clock_width  + (innerRadius - 70) * Math.sin(angle3);
+            })
+            .attr('y2', function(d, i) {
+            return clock_height + (innerRadius - 70) * Math.cos(angle3);
+            })
+            .style('stroke', compute((h / 12)));
+            
+            str.pop();    //删除上一个文本
+            str.push(d.getHours()+":"+(m<10?"0"+m:m)+":"+(s<10?"0"+s:s)); //存入新的时间并且一位数时补0
+            updatetimetext.data(str).text(function(d){return d;}) //更新时间
+            // setTimeout(chuli, 1000 - dm);//获取当前的毫秒，用1000减去，则是到下一秒的毫秒时间。
+        }
+            chuli(global_date);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // 初始化车辆选择框选中状态
+        function clear_select(){
+            for(var i=0; i<myform1.single.length; i++){
+                myform1.single[i].checked = false
+            }
+            myform1.single[0].checked = true
+        }
+        clear_select()
+        
+        // Promise.all保证多个数据集都加载完毕后进行下一步操作
+        Promise.all([d3.json("Abila.json"), d3.json("distance.json"), d3.json("carposition.json"), d3.json("interval.json"), d3.json("location_coordinate.json")]).then( function(loadData){
+            // 播放键相关变量声明
+            var play_flag = false
+            // 绘制地图路径
+            // 定义数据名
+            let abila = loadData[0];
+            let graph = loadData[1];
+            let car_path = loadData[2];
+            let interval = loadData[3];
+            let hot_posi = loadData[4];
+            // 配置投影
+            let projection = d3.geoMercator()
+            .fitExtent([
+                [0, 0],
+                [width, height]
+            ], abila);
+            // 创建路径生成器
+            let path = d3.geoPath()
+			.projection(projection);
+            // 画出边界线
+            let shapes = svg_map.append("g")
+            .selectAll("path")
+            .data(abila.features)
+            .join("path")
+            .attr("d", path)
+            .attr("fill", "white")
+            .attr('stroke',"black")
+            .attr('stroke-width', 1);
+
+            // 声明所有小车的停留位置记录，用来画轨迹
+            var car_path_1 = new Array()
+            var car_path_2 = new Array()
+            var car_path_3 = new Array()
+            var car_path_4 = new Array()
+            var car_path_5 = new Array()
+            var car_path_6 = new Array()
+            var car_path_7 = new Array()
+            var car_path_8 = new Array()
+            var car_path_9 = new Array()
+            var car_path_10 = new Array()
+            var car_path_11 = new Array()
+            var car_path_12 = new Array()
+            var car_path_13 = new Array()
+            var car_path_14 = new Array()
+            var car_path_15 = new Array()
+            var car_path_16 = new Array()
+            var car_path_17 = new Array()
+            var car_path_18 = new Array()
+            var car_path_19 = new Array()
+            var car_path_20 = new Array()
+            var car_path_21 = new Array()
+            var car_path_22 = new Array()
+            var car_path_23 = new Array()
+            var car_path_24 = new Array()
+            var car_path_25 = new Array()
+            var car_path_26 = new Array()
+            var car_path_27 = new Array()
+            var car_path_28 = new Array()
+            var car_path_29 = new Array()
+            var car_path_30 = new Array()
+            var car_path_31 = new Array()
+            var car_path_32 = new Array()
+            var car_path_33 = new Array()
+            var car_path_34 = new Array()
+            var car_path_35 = new Array()
+            var car_path_36 = new Array()
+            var car_path_37 = new Array()
+            var car_path_38 = new Array()
+            var car_path_39 = new Array()
+            var car_path_40 = new Array()
+
+            // 创建路径画板
+            var canvas_1 = svg_map.append("g")
+            var canvas_2 = svg_map.append("g")
+            var canvas_3 = svg_map.append("g")
+            var canvas_4 = svg_map.append("g")
+            var canvas_5 = svg_map.append("g")
+            var canvas_6 = svg_map.append("g")
+            var canvas_7 = svg_map.append("g")
+            var canvas_8 = svg_map.append("g")
+            var canvas_9 = svg_map.append("g")
+            var canvas_10 = svg_map.append("g")
+            var canvas_11 = svg_map.append("g")
+            var canvas_12 = svg_map.append("g")
+            var canvas_13 = svg_map.append("g")
+            var canvas_14 = svg_map.append("g")
+            var canvas_15 = svg_map.append("g")
+            var canvas_16 = svg_map.append("g")
+            var canvas_17 = svg_map.append("g")
+            var canvas_18 = svg_map.append("g")
+            var canvas_19 = svg_map.append("g")
+            var canvas_20 = svg_map.append("g")
+            var canvas_21 = svg_map.append("g")
+            var canvas_22 = svg_map.append("g")
+            var canvas_23 = svg_map.append("g")
+            var canvas_24 = svg_map.append("g")
+            var canvas_25 = svg_map.append("g")
+            var canvas_26 = svg_map.append("g")
+            var canvas_27 = svg_map.append("g")
+            var canvas_28 = svg_map.append("g")
+            var canvas_29 = svg_map.append("g")
+            var canvas_30 = svg_map.append("g")
+            var canvas_31 = svg_map.append("g")
+            var canvas_32 = svg_map.append("g")
+            var canvas_33 = svg_map.append("g")
+            var canvas_34 = svg_map.append("g")
+            var canvas_35 = svg_map.append("g")
+            var canvas_36 = svg_map.append("g")
+            var canvas_37 = svg_map.append("g")
+            var canvas_38 = svg_map.append("g")
+            var canvas_39 = svg_map.append("g")
+            var canvas_40 = svg_map.append("g")
+
+            // 声明绘制颜色块需要用到的数据
+            rect_data = [{'id':1, 'color': 'rgb(253, 245, 230)', 'pos_x':821, 'pos_y':0}, {'id':2, 'color': 'rgb(255, 218, 185)', 'pos_x':821, 'pos_y':29}, {'id':3, 'color': 'rgb(255, 250, 205)', 'pos_x':821, 'pos_y':58}, {'id':4, 'color': 'rgb(255, 245, 238)', 'pos_x':821, 'pos_y':87},
+                         {'id':5, 'color': 'rgb(240, 255, 240)', 'pos_x':821, 'pos_y':116}, {'id':6, 'color': 'rgb(230, 230, 250)', 'pos_x':821, 'pos_y':145}, {'id':7, 'color': 'rgb(255, 228, 225)', 'pos_x':821, 'pos_y':174}, {'id':8, 'color': 'rgb(47, 79, 79)', 'pos_x':821, 'pos_y':203},
+                         {'id':9, 'color': 'rgb(112, 128, 144)', 'pos_x':821, 'pos_y':232}, {'id':10, 'color': 'rgb(25, 25, 112)', 'pos_x':821, 'pos_y':261}, {'id':11, 'color': 'rgb(100, 149, 237)', 'pos_x':821, 'pos_y':290}, {'id':12, 'color': 'rgb(72, 61, 139)', 'pos_x':821, 'pos_y':319},
+                         {'id':13, 'color': 'rgb(0, 0, 205)', 'pos_x':821, 'pos_y':348}, {'id':14, 'color': 'rgb(70, 130, 180)', 'pos_x':821, 'pos_y':377}, {'id':15, 'color': 'rgb(0, 206, 209)', 'pos_x':861, 'pos_y':0}, {'id':16, 'color': 'rgb(102, 205, 170)', 'pos_x':861, 'pos_y':29},
+                         {'id':17, 'color': 'rgb(0, 100, 0)', 'pos_x':861, 'pos_y':58}, {'id':18, 'color': 'rgb(85, 107, 47)', 'pos_x':861, 'pos_y':87}, {'id':19, 'color': 'rgb(0, 255, 127)', 'pos_x':861, 'pos_y':116}, {'id':20, 'color': 'rgb(189, 183, 107)', 'pos_x':861, 'pos_y':145},
+                         {'id':21, 'color': 'rgb(255, 255, 0)', 'pos_x':861, 'pos_y':174}, {'id':22, 'color': 'rgb(255, 215, 0)', 'pos_x':861, 'pos_y':203}, {'id':23, 'color': 'rgb(188, 143, 143)', 'pos_x':861, 'pos_y':232}, {'id':24, 'color': 'rgb(205, 92, 92)', 'pos_x':861, 'pos_y':261},
+                         {'id':25, 'color': 'rgb(139, 69, 19)', 'pos_x':861, 'pos_y':290}, {'id':26, 'color': 'rgb(205, 133, 63)', 'pos_x':861, 'pos_y':319}, {'id':27, 'color': 'rgb(165, 42, 42)', 'pos_x':861, 'pos_y':348}, {'id':28, 'color': 'rgb(255, 99, 71)', 'pos_x':861, 'pos_y':377},
+                         {'id':29, 'color': 'rgb(255, 105, 180)', 'pos_x':899, 'pos_y':0}, {'id':30, 'color': 'rgb(255, 20, 147)', 'pos_x':899, 'pos_y':29}, {'id':31, 'color': 'rgb(219, 112, 147)', 'pos_x':899, 'pos_y':58}, {'id':32, 'color': 'rgb(208, 32, 144)', 'pos_x':899, 'pos_y':87},
+                         {'id':33, 'color': 'rgb(153, 50, 204)', 'pos_x':899, 'pos_y':116}, {'id':34, 'color': 'rgb(216, 191, 216)', 'pos_x':899, 'pos_y':145}, {'id':35, 'color': 'rgb(255, 130, 71)', 'pos_x':899, 'pos_y':174}, {'id':36, 'color': 'rgb(255, 211, 155)', 'pos_x':899, 'pos_y':203},
+                         {'id':37, 'color': 'rgb(139, 115, 85)', 'pos_x':899, 'pos_y':232}, {'id':38, 'color': 'rgb(255, 165, 79)', 'pos_x':899, 'pos_y':261}, {'id':39, 'color': 'rgb(255, 48, 48)', 'pos_x':899, 'pos_y':290}, {'id':40, 'color': 'rgb(255, 160, 122)', 'pos_x':899, 'pos_y':319}]
+
+            // 创建直线生成器
+            lineGenerator = d3.line()
+                            // 获取每个节点的x坐标
+                            .x(function(d) {
+                                return d[0]
+                            })
+                            // 获取每个节点的y坐标
+                            .y(function(d) {
+                                return d[1];
+                            });
+
+            // 为所有小车赋值路径生成器
+            for(var i=0; i<40; i++){
+                eval('canvas_' + (i+1).toString()).append('path')
+                .attr('id', 'path_' + (i+1).toString())
+                .attr('stroke', rect_data[i]['color'])
+                .attr('stroke-width', '4')
+                .attr('fill', 'none')
+                // 设置路径信息
+                .attr('d', lineGenerator(eval('car_path_'+(i+1).toString())));
+            }
+
+            function reset() {
+                initial_time = {'y':2014, 'm':1, 'd':6, 'hh':6, 'mm':29, 'ss':0};
+                // 力导图
+                let link_data = graph.links[trans_t(initial_time, '')];
+                // 更新simulation
+                simulation.force("link", null);
+                simulation.force("link", d3.forceLink(link_data)
+                .id(d => d.id)  // 每个节点的id的获取方式
+                .strength(d => d.source.group === d.target.group ? 0.5 : 0.1));
+                simulation.alphaTarget(0.5).restart();
+                // 更新link元素
+                link = link_group
+                .selectAll("line") // 用line元素来绘制
+                .data(link_data) // 绑定json文件中的links数据
+                .join("line")
+                .attr("stroke-width", d => Math.sqrt(d.value)); // 连线粗细通过线的value计算
+                // 信用卡视图
+                progress_line
+                .transition()
+                .attr("x1", time(new Date(2014, 1, 6, initial_time.hh, initial_time.mm)))
+                .attr("x2", time(new Date(2014, 1, 6, initial_time.hh, initial_time.mm)));
+                date_labels.selectAll("text")
+                .attr("fill", "gray")
+                .style("stroke", null);
+                date_labels
+                .select("#d"+fix(initial_time.d))
+                .attr("fill", "black")
+                .style("stroke", "black");
+            }
+
+            function clearPath(){
+                car_path_1 = new Array()
+                car_path_2 = new Array()
+                car_path_3 = new Array()
+                car_path_4 = new Array()
+                car_path_5 = new Array()
+                car_path_6 = new Array()
+                car_path_7 = new Array()
+                car_path_8 = new Array()
+                car_path_9 = new Array()
+                car_path_10 = new Array()
+                car_path_11 = new Array()
+                car_path_12 = new Array()
+                car_path_13 = new Array()
+                car_path_14 = new Array()
+                car_path_15 = new Array()
+                car_path_16 = new Array()
+                car_path_17 = new Array()
+                car_path_18 = new Array()
+                car_path_19 = new Array()
+                car_path_20 = new Array()
+                car_path_21 = new Array()
+                car_path_22 = new Array()
+                car_path_23 = new Array()
+                car_path_24 = new Array()
+                car_path_25 = new Array()
+                car_path_26 = new Array()
+                car_path_27 = new Array()
+                car_path_28 = new Array()
+                car_path_29 = new Array()
+                car_path_30 = new Array()
+                car_path_31 = new Array()
+                car_path_32 = new Array()
+                car_path_33 = new Array()
+                car_path_34 = new Array()
+                car_path_35 = new Array()
+                car_path_36 = new Array()
+                car_path_37 = new Array()
+                car_path_38 = new Array()
+                car_path_39 = new Array()
+                car_path_40 = new Array()
+                for(var i=0; i<40; i++){
+                    d3.select('#path_'+ (i+1).toString()).attr('d', lineGenerator(eval('car_path_' + (i+1).toString())));
+                }
+            }
+
+            // 在地图上绘制车辆
+            // 根据传入的json数据生成一个Date数据
+            function createDate(date){
+                let d = new Date()
+                d.setFullYear(date['y'], date['m'], date['d'])
+                d.setHours(date['hh'], date['mm'], date['ss'])
+                return d
+            }
+
+            // 创建一个时间加减工具
+            function addDate(date, secs){ 
+                let d = createDate(date)
+                d.setTime(d.getTime() + secs*1000); 
+                let m = d.getMonth(); 
+                let hh = d.getHours()
+                let mm = d.getMinutes()
+                let ss = d.getSeconds()
+                return {'y':d.getFullYear(), 'm':m, 'd':d.getDate(), 'hh':hh, 'mm':mm, 'ss':ss}
+            }
+
+            // 将一位数字补足成两位数，前面加0
+            function fix(num, length=2) {
+                return ('' + num).length < length ? ((new Array(length + 1)).join('0') + num).slice(-length) : '' + num;
+            }
+
+            // 将json格式的时间数据转化为字符串数据
+            function trans_t(date, suf){
+                return fix(date['m']) + '/' + fix(date['d']) + '/' + date['y'] + ' ' + fix(date['hh']) + ':' + fix(date['mm']) + ':' + fix(date['ss']) + suf
+            }
+            
+            // 运行动画
+            function display(){
+                if(play_flag && createDate(global_date) <= createDate(end_date)){
+                    car_run(global_date, 1)
+                    pre_date = global_date
+                    global_date = addDate(pre_date, 1)
+                    chuli(global_date)
+                    // console.log(pre_date['d'], global_date['d'])
+                    if(pre_date['d'] < global_date['d']){
+                        console.log('new day coming' + pre_date['d'])
+                        clearPath()
+                    }
+                    if(pre_date['d'] < global_date['d']){
+                        console.log('new day coming' + pre_date['d'])
+                        clearPath()
+                    }
+                }
+            }
+
+            // 车子运行动画
+            function car_run(now_date, duration){
+                d3.selectAll('.car_item')
+                .transition() // 启动过渡效果
+                .duration(duration)
+                .attr("cx", d => {
+                    if(d[trans_t(now_date, '_y')] != undefined){
+                        let result = projection([d[trans_t(now_date, '_y')], d[trans_t(now_date, '_x')]])
+                        eval('car_path_' + d['id']).push(result)
+                        d3.select('#path_'+ d['id']).attr('d', lineGenerator(eval('car_path_' + d['id'])));
+                        return result[0]
+                    }
+                    else{
+                        return d3.select('#car_' + d['id']).attr("cx");
+                    }
+                }) 
+                .attr("cy", d => {
+                    if(d[trans_t(now_date, '_y')] != undefined){
+                        // console.log(projection([d[trans_t(global_date, '_y')], d[trans_t(now_date, '_x')]])[1])
+                        return projection([d[trans_t(global_date, '_y')], d[trans_t(now_date, '_x')]])[1]
+                    }
+                    else{
+                        // console.log(d3.select('#car_' + d['id']).attr("cy"))
+                        return d3.select('#car_' + d['id']).attr("cy");
+                        // return 300
+                    }
+                })
+                .on('end', display)
+                // 力导图
+                if ((now_date.mm === 29 && now_date.ss === 0) || (now_date.mm === 59 && now_date.ss === 0)) {
+                    // 更新link数据
+                    let link_data = graph.links[trans_t(now_date, '')];
+                    // 更新simulation
+                    simulation.force("link", null);
+                    simulation.force("link", d3.forceLink(link_data)
+                    .id(d => d.id) 	// 每个节点的id的获取方式
+                    .strength(d => d.source.group === d.target.group ? 0.5 : 0.1));
+                    simulation.alphaTarget(0.5).restart();
+                    // 更新link元素
+                    link = link_group
+                        .selectAll("line") // 用line元素来绘制
+                        .data(link_data) // 绑定json文件中的links数据
+                        .join("line")
+                        .attr("stroke-width", d => Math.sqrt(d.value)); // 连线粗细通过线的value计算
+                }
+                // 信用卡视图
+                progress_line
+                .transition()
+                .attr("x1", time(new Date(2014, 1, 6, now_date.hh, now_date.mm)))
+                .attr("x2", time(new Date(2014, 1, 6, now_date.hh, now_date.mm)));
+                date_labels.selectAll("text")
+                .attr("fill", "gray")
+                .style("stroke", null);
+                date_labels
+                .select("#d"+fix(now_date.d))
+                .attr("fill", "black")
+                .style("stroke", "black");
+            }
+
+            // 为播放按钮添加上点击功能
+            var button_flag = false
+            var play_button = d3.select('.play_button')
+            .on("click", function () { // 播放按钮点击事件
+                if(!button_flag){ // 开始放映
+                    // 运行小车动画
+                    play_flag = true
+                    button_flag = true
+                    d3.select(this).text('播放')
+                    display(global_date, end_date)
+                }
+                else{ // 暂停放映
+                    play_flag = false
+                    button_flag = false
+                    d3.select(this).text('暂停')
+                }
+            });
+
+
+            // 为重置按钮添加上点击功能
+            var reset_button = d3.select('.reset_button')
+            .on("click", function () { // 重设所有状态
+                global_date = {'y':2014, 'm':1, 'd':6, 'hh':6, 'mm':29, 'ss':0}
+                clear_select() // 清除所有选择状态
+                clearPath() // 清除所有轨迹
+                reset() // 将其他图恢复初始点
+                chuli(global_date) // 将时钟恢复原始状态
+                checkNum() // 根据所选车更新图表
+            });
+
+            // 关于地点的名称，位置，停车数量。三个数组各个元素一一对应
+            var name_array = new Array() // 名称
+            var posi_array = new Array() // 地点经纬度
+            var num_array = new Array() // 地点每10分钟内的停车数量
+            var array_flag = new Array() // 地点当前是否为热门地点
+            var name_num = {} // 地点名称与下标的对应关系
+            var tmp_index = 0
+            hot_posi.forEach(d => {
+                name_array.push(d["name"])
+                posi_array.push([d["long"], d["lat"]])
+                num_array.push(0)
+                array_flag.push(false)
+                name_num[d["name"]] = tmp_index
+                tmp_index++
+            });
+            
+
+            // 生成所有的匹配地点
+            var svg_posi = svg_map.append('g')
+            svg_posi.selectAll()
+            .data(hot_posi)
+            .enter()
+            .append("circle")  
+            .attr("class", d => "match_posi")
+            .attr("id", d => "match_posi_" + name_num[d["name"]]) 
+            .attr("cx", d => projection([d["long"], d["lat"]])[0]) 
+            .attr("cy", d => projection([d["long"], d["lat"]])[1])  
+            .attr("r", 20)
+            .attr("fill", d => d["color"])
+            .attr("opacity", 0.5)
+            .on('mouseover', function (event,d) {
+                d3.select(this).transition().style("stroke-width", 5);
+                tooltip.transition().duration(250).style("opacity", 1);
+                tooltip.html("<p>" + "Location: " + d.name + "</p>")
+                // 设置tooltip距离鼠标的相对位置
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on('mouseout', function (event,d) {
+                d3.select(this).transition().style("stroke-width", 3);
+                tooltip.transition().duration(250).style("opacity", 0);
+            });
+            
+            
+            // 绑定数据绘制每个车对应的颜色方块
+            svg_map.append('g')
+            .selectAll()
+            .data(rect_data)
+            .enter()
+            .append("rect") //这里需要参考d3官网上关于SVG部分的文档，rect表示绘制一个矩形
+            .attr("class", "rect_data") // 给这些方块添加一个类型，从而方便d3统一选中这些元素
+            .attr("id", d => 'rect_' + d['id']) // 给这些方块添加一个id，方便d3选中单个元素
+            .attr("width", 40) // 设置矩形的长
+            .attr("height", 20) // 设置矩形的高
+            .attr("x", d => d['pos_x']) // 设置矩形左上角的x坐标
+            .attr("y", d => d['pos_y']) // 设置矩形左上角的y坐标
+            .attr("fill", d => d['color'])
+            // .attr("fill-opacity", 0.7) // 设定透明度70%
+            // .on("mouseover", function (event, d) { //为绘制的方块添加鼠标经过上方的事件，这里的框中必须传入event和d两个元素，第二个元素对应的是当前事件选中的元素
+            //     d3.select(this).transition().attr("width", 45).attr("height", 30) // 矩形放大
+            //     .attr("x", d => scaleX(d["Year"]) - 22.5).attr("y", d => scaleY(d["Month"]) - 15) // 因为矩形放大，所以要对应变换矩形位置
+            //     var coordinates= d3.pointer(event);
+            //     var x = coordinates[0];
+            //     var y = coordinates[1];
+            //     console.info(d)
+            //     tooltip.html("日期：" + d["Year"] + "/" + d["Month"] + "<br/>" + 
+            //         "平均温度：" + d["avg_temp"].toFixed(2) + "度" + "<br/>" + 
+            //         "最高温度：" + d["max_temp"] + "度" + "<br/>" +
+            //         "最低温度：" + d["min_temp"] + "度") // 设置tooltip中显示的内容
+            //         .style("left", (x-50) + 'px') // 设置显示框的位置
+            //         .style("top", (y-80) + 'px')  
+            //         .style("opacity", '1') // 让原本隐藏的tooltip显示出来
+            // })
+            // .on("mouseout", function () { //为绘制的方块添加鼠标离开的事件
+            //     d3.select(this).transition().attr("width", 30).attr("height", 20) // 矩形恢复原来的大小
+            //     .attr("x", d => scaleX(d["Year"]) - 15).attr("y", d => scaleY(d["Month"]) - 10)
+            //     tooltip.style('opacity', '0') // 移出鼠标时只需要让tooltip隐藏即可
+            // });
+
+
+            // 最后，将我们绘制的所有东西一起移动，空出留白，并在水平方向多移动50个像素，从而使得所有的月份文本正常显示
+            // group.attr("transform", `translate(${margin + 50}, ${margin})`);
+
+            // console.log(eval('car_path_40').length)
+
+            // console.log(car_path)
+            // console.log(trans_t(global_date, 'x'))
+            // 初始化车辆在地图上的分布
+            let cars = svg_map.append('g') // 创建绘制cars的区域
+            .selectAll('car')
+            .data(car_path)
+            .enter()
+            .append("circle")  
+            .attr("class", "car_item")
+            .attr("id", d => 'car_' + d['id']) 
+            .attr("cx", d => {
+                if(d[trans_t(global_date, '_y')] != undefined){
+                    let result = projection([d[trans_t(global_date, '_y')], d[trans_t(global_date, '_x')]])
+                    return result[0]
+                }
+                else{
+                    return -100
+                }
+            }) 
+            .attr("cy", d => {
+                if(d[trans_t(global_date, '_x')] != undefined){
+                    return projection([d[trans_t(global_date, '_y')], d[trans_t(global_date, '_x')]])[1]
+                }
+                else{
+                    return -100
+                }
+            })  
+            .attr("r", 8)
+            .attr("fill", d => {
+                // console.log(d3.select('#rect_' + d['id']).data()[0]['color'])
+                return d3.select('#rect_' + d['id']).data()[0]['color']})
+
+            // 为所有地点配上光圈动画
+            var r_array = [22, 24, 26, 28, 30, 28, 26, 24, 22, 20]
+            var r_array_index = 0
+            function posi_flash(posi_name){
+                d3.select('#match_posi_' + name_num[posi_name])
+                .transition()
+                .duration(200)
+                .attr('r', d => {
+                    result = r_array[r_array_index]
+                    r_array_index++
+                    if(r_array_index==10)r_array_index=0
+                    return result
+                })
+                .on('end', d=>{
+                    if(array_flag[name_num[d['name']]])
+                        posi_flash(posi_name)
+                })
+            }
+            // posi_flash("Brew've Been Served")
+
+            
+            // 获取多选并将未选中的元素隐藏，将选中的元素显示
+            function checkNum(){
+                let checked = [];
+                for(var i=0; i<myform1.single.length; i++){
+                    if(myform1.single[i].checked==true){
+                        // console.log('car_' + myform1.single[i].id)
+                        document.getElementById('car_' + myform1.single[i].id).style.visibility="visible";
+                        document.getElementById('path_' + myform1.single[i].id).style.visibility="visible";
+                        if ((myform1.single[i].id) === "36") checked.push("101");
+                        else if ((myform1.single[i].id) === "37") checked.push("104");
+                        else if ((myform1.single[i].id) === "38") checked.push("105");
+                        else if ((myform1.single[i].id) === "39") checked.push("106");
+                        else if ((myform1.single[i].id) === "40") checked.push("107");
+                        else  checked.push(myform1.single[i].id);
+                    }
+                    else{
+                        // console.log(myform1.single[i].id)
+                        document.getElementById('car_' + myform1.single[i].id).style.visibility="hidden";
+                        // console.log('path_' + myform1.single[i].id)
+                        document.getElementById('path_' + myform1.single[i].id).style.visibility="hidden";
+                    }
+                }
+                // 区域线
+                let checked_length = checked.length;
+                if (checked_length > 5) {
+                    checked = checked.slice(0, 5);
+                    checked_length = checked.length;
+                }
+                // console.log(checked);
+                location_lines.selectAll("line").remove();
+                for (var i=0; i<checked_length; i++) {
+                    location_lines.selectAll("line.car_"+checked[i])
+                    .data(interval[checked[i]])
+                    .join("line")
+                    .attr("class", "car_" + checked[i])
+                    .attr("x1", d => time(convertFromStringToDate(d.start_time)) + margin.left)
+                    .attr("x2", d => time(convertFromStringToDate(d.end_time)) + margin.right)
+                    .attr("y1", d => date(date_data.indexOf(d.date.slice(0,5)))-15+5*i)
+                    .attr("y2", d => date(date_data.indexOf(d.date.slice(0,5)))-15+5*i)
+                    .style("stroke", d => location_color(d.location))
+                    .style("opacity", 1)
+                    .style("stroke-width", 3)
+                    .on('mouseover', function (event,d) {
+                            d3.select(this).transition().style("stroke-width", 5);
+                            tooltip.transition().duration(250).style("opacity", 1);
+                            tooltip.html(
+                                "<p>" + "Car ID: " + d.id
+                                + "<br>" + "Start Time: " + d.start_time
+                                + "<br>" + 'End Time: ' + d.end_time
+                                + "<br>" + 'Location: ' + d.location
+                                + "<br>" + 'Price: ' + d.price
+                                + "</p>"
+                            )
+                                // 设置tooltip距离鼠标的相对位置
+                                .style("left", (event.pageX + 15) + "px")
+                                .style("top", (event.pageY - 28) + "px");
+                        })
+                        .on('mouseout', function (event,d) {
+                            d3.select(this).transition().style("stroke-width", 3);
+                            tooltip.transition().duration(250).style("opacity", 0);
+                        });
+                }
+            }
+            // 初始时间
+            let initial_time = trans_t({'y':2014, 'm':1, 'd':6, 'hh':6, 'mm':29, 'ss':0}, '');
+            // 创建一个力学模拟器
+            let simulation = d3.forceSimulation(graph.nodes)
+		    // 连接力
+            .force("link", d3.forceLink(graph.links[initial_time])
+            .id(d => d.id) 	// 每个节点的id的获取方式
+            .strength(d => {return d.source.group === d.target.group ? 1 : 0.2;})) 
+		    // 万有引力
+            .force("charge", d3.forceManyBody().strength(-125))
+		    // 用指定的x坐标和y坐标创建一个新的居中力，如果未指定x和y，则默认为⟨0,0⟩
+            .force("center", d3.forceCenter(relation_width / 2, relation_height / 2)); 
+            // 计算凸壳集合的函数
+		    function convexHulls(nodes) {
+                let offset = 15; // 可以控制区域边界大小
+                let hulls = {};
+                for (let k=0; k<nodes.length; ++k) {
+                    let n = nodes[k];
+                    if (n.size) continue;
+                    let i = n.group, l = hulls[i] || (hulls[i] = []);
+                    // l 记录了一个点的正方形区域的四个顶点
+                    l.push([n.x-offset, n.y-offset]);
+                    l.push([n.x-offset, n.y+offset]);
+                    l.push([n.x+offset, n.y-offset]);
+                    l.push([n.x+offset, n.y+offset]);
+                }
+                // 创建凸壳集合
+                let hullset = [];
+                for (i in hulls) {
+                    // d3.polygonHull可以求多边形最外层的点，返回的顺序是顺时针
+                    hullset.push({group: i, path: d3.polygonHull(hulls[i])});
+                }
+                return hullset;
+		    }
+		    // d3.line.curve()方法用于绘制一条曲线
+		    let curve = d3.line().curve(d3.curveCardinalClosed.tension(0.01));
+		    // 分类绘制凸壳
+		    function drawCluster(d) {
+			    //返回曲线路径
+			    return curve(d.path);
+		    }
+            // 定义凸壳组件
+            let hulls = svg_relation.append("g")
+                .selectAll("path.hull")
+                .data(convexHulls(graph.nodes))
+                .enter()
+                .append("path")
+                .attr("class", "hull")
+                .attr("d", drawCluster)
+                .style("fill", function(d) { return color(d.group); });
+            // 定义人物节点之间连线的信息
+            let link_group = svg_relation.append("g")
+            let link = link_group
+                .attr("stroke", "#999")
+                .attr("stroke-opacity", 0.6)
+                .selectAll("line") // 用line元素来绘制
+                .data(graph.links[initial_time]) // 绑定json文件中的links数据
+                .join("line")
+                .attr("stroke-width", d => Math.sqrt(d.value)); // 连线粗细通过线的value计算
+            // 提示框
+            let groups = [[0, "Information Technology"], [1, "Engineering"], [2, "Executive"], [3, "Security"], [4, "Facilities"]]
+            let tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+            // 定义人物节点信息
+            let node = svg_relation.append("g")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 1.5)
+                .selectAll("circle") // 人物节点通过圆来绘制 
+                .data(graph.nodes)// 为人物节点绑定nodes数据
+                .join("circle")
+                .attr("r", 5)// 设置节点半径
+                .attr("fill", function(d) { return color(d.group); })// 设置节点的填充色，通过节点的group属性来计算节点的填充颜色
+                .call(
+                    // 以定义的这些节点为参数，调用drag()函数
+                    // 绑定拖拽函数的三个钩子，即拖拽开始、拖拽中、拖拽结束
+                    d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended)
+                )
+                .on('mouseover', function (event,d) {
+                    d3.select(this).transition().attr("r", 10);
+                    tooltip.transition()
+                        .duration(250) // 设置transition效果的速度，默认为500ms
+                        .style("opacity", 1);
+                    tooltip.html(
+                        "<p> Name: " + d.id + "<br>" + 'Group: ' + groups[d.group][1] + "<br>" + "</p>"
+                    )
+                        // 设置tooltip距离鼠标的相对位置
+                        .style("left", (event.pageX + 15) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on('mouseout', function (event,d) {
+                    d3.select(this).transition().attr("r", 5);
+                    tooltip.transition()
+                        .duration(250)
+                        .style("opacity", 0);
+                });
+            // 定义simulation内部计时器tick每次结束时的动作
+            simulation.on("tick", () => {
+                // 每次tick计时到时，连接线的响应动作
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                // 每次tick计时到时，节点的响应动作
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+                // 每次tick计时到时，凸壳的响应动作
+                hulls
+                    .data(convexHulls(graph.nodes))
+                    .attr("d", drawCluster);
+                });
+            // 定义图例组件
+            let legend = svg_relation.append("g")
+                .attr("id", "legend");
+            // 定义图例中的色块（此处为圆形）
+            legend.selectAll("mydots")
+                .data(d3.range(0,5))
+                .enter()
+                .append("circle")
+                .attr("cx", 50)
+                .attr("cy", function(d,i){ 
+                    // 300是第一个点出现的地方，25是点之间的距离
+                    return 300 + i*25
+                }) 
+                .attr("r", 5)
+                .style("fill", function(d){ return color(d)})
+                .style("opacity",0.8);
+            // 在图例中添加一个文本标签
+            legend.selectAll("mylabels")
+                .data(groups)
+                .enter()
+                .append("text")
+                .attr("x", 70)
+                .attr("y", function(d,i){ return 300 + i*25}) 
+                .style("fill", function(d){ return color(d[0])})
+                .style("opacity", 0.8)
+                .text(d => d[1])
+                .attr("text-anchor", "left")
+                .style("alignment-baseline", "middle")
+            // 定义开始拖拽节点时的动作，注意v6版本是通过event返回的函数参数来处理的 
+            function dragstarted(event) {
+                // 当开始拖动时，restart()方法重新启动模拟器的内部计时器并返回模拟器，
+                // alphaTarget(0.3) => alpha将保持在0.3左右，使模拟不断移动
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+            // 定义拖拽中的动作
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+            // 定义拖拽结束的动作
+            // 在拖动结束时，alphaTarget被设置回0，因此再次稳定下来，这就是阻力相互作用后力返回的原因
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+            // 信用卡视图
+            // 区域尺度
+            locations = ['Kronos Mart',
+            'Maximum Iron and Steel',
+            'Gelatogalore',
+            "Albert's Fine Clothing",
+            'Desafio Golf Course',
+            'Ouzeri Elian',
+            "Frydos Autosupply n' More",
+            'Default',
+            'Hippokampos',
+            'Bean There Done That',
+            'Nationwide Refinery',
+            'Coffee Cameleon',
+            'U-Pump',
+            'Kalami Kafenion',
+            'Coffee Shack',
+            'Brewed Awakenings',
+            'Katerina?s Café',
+            "Octavio's Office Supplies",
+            "Guy's Gyros",
+            "Shoppers' Delight",
+            'Ahaggo Museum',
+            'Stewart and Sons Fabrication',
+            'Abila Airport',
+            'Chostus Hotel',
+            'Abila Scrapyard',
+            "Jack's Magical Beans",
+            "Frank's Fuel",
+            'General Grocer',
+            'Roberts and Sons',
+            "Brew've Been Served",
+            'Carlyle Chemical Inc.',
+            'Hallowed Grounds',
+            'Daily Dealz',
+            'Abila Zacharo',
+            'Kronos Pipe and Irrigation'
+            ];
+            let location_color = d3.scaleOrdinal(d3.schemeAccent).domain(locations);
+            // 时间比例尺
+            let time = d3.scaleTime()
+            .domain([new Date(2014, 1, 6), new Date(2014, 1, 7)])
+            .range([60, 820]);
+            let time_scale = svg_card.append("g")
+            .call(d3.axisTop(time).ticks(12))
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            let date = d3.scaleLinear()
+            .domain([0, 13])
+            .range([40, 420]);
+            let date_labels = svg_card.append("g")
+            .attr("id", "date_labels");
+            // 日期标签
+            date_data = ["01/06", "01/07", "01/08", "01/09", "01/10", "01/11", "01/12", "01/13", "01/14", "01/15", "01/16", "01/17", "01/18", "01/19"]
+            date_labels.selectAll("text")
+            .data(date_data)
+            .enter()
+            .append("text")
+            .attr("id", d =>"d"+d.slice(3))
+            .attr("x", 20)
+            .attr("y", d => date(date_data.indexOf(d)))
+            .text(d => d)
+            .attr("text-anchor", "left")
+            .attr("fill", "gray");
+            // 日期分割线
+            date_labels.selectAll("line")
+            .data(date_data)
+            .enter()
+            .append("line")
+            .attr("x1", 80)
+            .attr("y1", d => date(date_data.indexOf(d))+10)
+            .attr("x2", 840)
+            .attr("y2", d => date(date_data.indexOf(d))+10)
+            .style("stroke", "black")
+            .style("opacity", 0.2);
+            let location_lines = svg_card.append("g")
+            .attr("id", "location_lines");
+            // 将字符串数据转化为日期
+            function convertFromStringToDate(string) {
+                let timePieces = string.split(":");
+                return(new Date(2014, 1, 6, timePieces[0], timePieces[1], timePieces[2]))
+            }
+            // 进度条
+            let progress_line = svg_card.append("g").append("line")
+            .attr("id", "progress_line")
+            .attr("x1", d => time(new Date(2014, 1, 6))+margin.left)
+            .attr("x2", d => time(new Date(2014, 1, 6))+margin.left)
+            .attr("y1", date(0)-50)
+            .attr("y2", date(13)+50)
+            .attr("stroke-dasharray", "10 10")
+            .style("stroke", "gray")
+            .style("opacity", 0.5)
+            .style("stroke-width", 3);
+            // 先执行一次得到默认情况 
+            checkNum()
+            //多选的交互 
+            d3.selectAll(".checkclass")
+            .on("click", function(){
+                let all_cars = d3.selectAll('.car_item').data()
+                // console.log(all_cars)
+                checkNum();
+            });
+            // 运行小车动画
+            car_run(global_date, 1);
+        })
+    </script>
+</body>
+</html>
